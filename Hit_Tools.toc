@@ -1,0 +1,17 @@
+## Interface: 20505
+## Title: Hit-Tools
+## Notes: XP tracking + tank tools (AMark, more soon).
+## Author: HitPo + ChatGPT
+## Version: 0.1.0
+## SavedVariablesPerCharacter: HitToolsDB, XPRateDB
+
+Core.lua
+UI.lua
+Options.lua
+AMark.lua
+MountTracker.lua
+CursorGrow.lua
+SocialHeatmap.lua
+SocialUI.lua
+Baggy.lua
+BaggyUI.lua
