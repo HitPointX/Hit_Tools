@@ -51,10 +51,27 @@ Hit-Tools is a World of Warcraft TBC Anniversary addon focused on dungeon pace, 
 - Bank integration and keyring panel support.
 - Per-character and account-total gold display.
 
+### Scrapya
+- Auto-sells poor-quality (grey) items when a vendor opens.
+- Uses repeated sell passes for reliable bulk selling.
+- Shift override support (hold Shift while opening vendor to skip once).
+- Optional caution mode (disabled by default): can sell soulbound white/blue armor that is not your class primary armor type.
+- Caution mode safeguards: never sells BoE items and never sells jewelry/weapons through that mode.
+
 ### CursorGrow
 - Cursor growth/visibility aid based on high-speed cursor movement.
 - Optional glow effects and debug/test controls.
 - Optional easter egg particle effects.
+
+### Catfish
+- Double-left-click world cast helper for Fishing using a secure click-binding approach.
+- Bobber bite alert with transparent pulsing circular glow plus meow sound (`assets/meow.ogg`).
+- Hover-assisted bobber tracking with soft-target CVar tuning for better bobber detection fidelity.
+- Adaptive timing model that learns cast-to-catch timing from recent successful catches.
+- Adaptive predictor includes EMA smoothing and anti-early bias tuning to reduce premature alerts.
+- Glow anchor prefers confirmed bobber-hover cursor position, then cursor fallback if needed.
+- On clients without direct pre-bite combat events, best results come from hovering the bobber.
+- Alert stops on click/loot and uses timeout safeguards to avoid stale screen effects.
 
 ### MountTracker
 - Detects tracked mount boss pulls (raid + dungeon + target/combat fallback logic).
@@ -83,10 +100,28 @@ CursorGrow:
 - `/hit cursor debug [on|off]`
 - `/hit cursor test`
 
+Catfish:
+- `/hit catfish ...`
+- `/hit catfish on|off|test`
+- `/hit catfish debug on|off`
+- `/hit catfish adaptive on|off`
+- `/hit catfish adaptive reset`
+- `/hit catfish delay <1-60>`
+- `/hit catfish lead <0-3>`
+- `/hit catfish min <2-40>`
+- `/hit catfish max <3-45>`
+
 Baggy:
 - `/hit baggy debug [on|off]`
 - `/hit baggy diag`
 - `/hit baggy overlay`
+
+Scrapya:
+- `/hit scrapya on|off`
+- `/hit scrapya status`
+- `/hit scrapya summary on|off`
+- `/hit scrapya shift on|off`
+- `/hit scrapya soulbound on|off`
 
 Social Heatmap:
 - `/hit social stats`

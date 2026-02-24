@@ -519,19 +519,123 @@ function HitTools:CreateOptions()
   cursorGrowInfo:SetJustifyH("LEFT")
   cursorGrowInfo:SetText("When enabled, your mouse cursor will grow larger when you move it quickly,\nmaking it easier to locate during combat or when switching between windows.")
 
+  local catfishEnabled = createCheck(extraPage, "Enable Catfish (fishing helper)", "Double-left-click in the world to cast Fishing, and show bobber bite alerts with glow + meow sound.", function(v)
+    if not HitTools.DB.catfish then
+      HitTools.DB.catfish = {
+        enabled = true,
+        doubleClickCast = true,
+        bobberAlert = true,
+        playSound = true,
+        doubleClickWindow = 0.35,
+        minBiteDelay = 1.5,
+        hoverPredictiveDelay = 8.0,
+        adaptiveEnabled = true,
+        adaptiveBootstrapDelay = 8.0,
+        adaptiveMinSeconds = 4.0,
+        adaptiveMaxSeconds = 18.0,
+        adaptiveLeadSeconds = 0.35,
+        adaptiveSamples = {},
+        alertTimeout = 8.0,
+        pulseSpeed = 2.2,
+        pulseAmount = 0.16,
+        glowScale = 1.0,
+      }
+    end
+    HitTools.DB.catfish.enabled = v
+    if HitTools.Catfish then
+      if v then
+        HitTools.Catfish:Enable()
+      else
+        HitTools.Catfish:Disable()
+      end
+    end
+  end)
+  catfishEnabled:SetPoint("TOPLEFT", cursorGrowInfo, "BOTTOMLEFT", -20, -16)
+
+  local catfishInfo = extraPage:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  catfishInfo:SetPoint("TOPLEFT", catfishEnabled, "BOTTOMLEFT", 20, -8)
+  catfishInfo:SetWidth(400)
+  catfishInfo:SetJustifyH("LEFT")
+  catfishInfo:SetText("Catfish adds a fishing flow helper: double-left-click to cast Fishing,\nand a pulsing transparent glow + meow alert when a fish bites.")
+
   -- Baggy settings
   local baggyEnabled = createCheck(extraPage, "Enable Baggy (unified bag UI)", "Replaces default bags with a single unified bag window with search, sorting, and rainbow effects.", function(v)
     HitTools.DB.baggy.enabled = v
     -- Show reload prompt popup
     StaticPopup_Show("HITTOOLS_BAGGY_RELOAD")
   end)
-  baggyEnabled:SetPoint("TOPLEFT", cursorGrowInfo, "BOTTOMLEFT", -20, -16)
+  baggyEnabled:SetPoint("TOPLEFT", catfishInfo, "BOTTOMLEFT", -20, -16)
 
   local baggyInfo = extraPage:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
   baggyInfo:SetPoint("TOPLEFT", baggyEnabled, "BOTTOMLEFT", 20, -8)
   baggyInfo:SetWidth(400)
   baggyInfo:SetJustifyH("LEFT")
   baggyInfo:SetText("Baggy shows all your bags in a single unified window with search, sorting (rarity, alphabetical, type, newest),\nand plays a rainbow border effect when you loot rare or epic items. Press B to toggle.")
+
+  -- Scrapya settings
+  local refreshScrapyaControls
+
+  local scrapyaEnabled = createCheck(extraPage, "Enable Scrapya (auto-sell junk)", "Automatically sells grey items when you open a vendor. Hold Shift while opening vendor to skip once.", function(v)
+    if not HitTools.DB.scrapya then
+      HitTools.DB.scrapya = {
+        enabled = true,
+        showSummary = true,
+        shiftBypass = true,
+        sellInterval = 0.2,
+        maxPasses = 40,
+        sellNonPrimarySoulbound = false,
+      }
+    end
+    HitTools.DB.scrapya.enabled = v
+    if not v and HitTools.Scrapya and HitTools.Scrapya.StopSelling then
+      HitTools.Scrapya:StopSelling("disabled_option")
+    end
+    if refreshScrapyaControls then
+      refreshScrapyaControls()
+    end
+  end)
+  scrapyaEnabled:SetPoint("TOPLEFT", baggyInfo, "BOTTOMLEFT", -20, -16)
+
+  local scrapyaInfo = extraPage:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+  scrapyaInfo:SetPoint("TOPLEFT", scrapyaEnabled, "BOTTOMLEFT", 20, -8)
+  scrapyaInfo:SetWidth(400)
+  scrapyaInfo:SetJustifyH("LEFT")
+  scrapyaInfo:SetText("Scrapya auto-sells poor-quality (grey) items when a merchant window opens.\nIt uses repeated sell passes for reliability and prints a summary after selling.")
+
+  local scrapyaSoulboundMode = createCheck(extraPage, "Enable CAUTION mode: sell soulbound non-primary armor", "Disabled by default. When enabled, Scrapya may sell soulbound white/blue armor that is NOT your class primary armor type. Never sells BoE items, weapons, rings, necklaces, or trinkets.", function(v)
+    if not HitTools.DB.scrapya then
+      HitTools.DB.scrapya = {
+        enabled = true,
+        showSummary = true,
+        shiftBypass = true,
+        sellInterval = 0.2,
+        maxPasses = 40,
+        sellNonPrimarySoulbound = false,
+      }
+    end
+    HitTools.DB.scrapya.sellNonPrimarySoulbound = v
+  end)
+  scrapyaSoulboundMode:SetPoint("TOPLEFT", scrapyaInfo, "BOTTOMLEFT", -20, -14)
+
+  local scrapyaWarning = extraPage:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+  scrapyaWarning:SetPoint("TOPLEFT", scrapyaSoulboundMode, "BOTTOMLEFT", 20, -8)
+  scrapyaWarning:SetWidth(430)
+  scrapyaWarning:SetJustifyH("LEFT")
+  scrapyaWarning:SetTextColor(1.0, 0.25, 0.25)
+  scrapyaWarning:SetText("WARNING: Use with caution. This mode can vendor soulbound white/blue off-armor pieces.\nSafeguards: BoE is ignored, only soulbound items, and jewelry/weapons are never sold by this mode.")
+
+  refreshScrapyaControls = function()
+    local db = HitTools.DB and HitTools.DB.scrapya
+    local scrapyaOn = db and db.enabled and true or false
+    if scrapyaSoulboundMode.SetEnabled then
+      scrapyaSoulboundMode:SetEnabled(scrapyaOn)
+    end
+    if not scrapyaOn then
+      scrapyaWarning:SetAlpha(0.6)
+    else
+      scrapyaWarning:SetAlpha(1)
+    end
+  end
 
   panel:SetScript("OnShow", function()
     if not HitTools.DB then return end
@@ -564,7 +668,53 @@ function HitTools:CreateOptions()
     amarkPriority:SetText(HitTools.DB.amark.priorityAfterSkull or "x triangle moon square")
 
     cursorGrowEnabled:SetChecked(HitTools.DB.cursorGrow and HitTools.DB.cursorGrow.enabled and true or false)
+    if type(HitTools.DB.catfish) ~= "table" then
+      HitTools.DB.catfish = {
+        enabled = true,
+        doubleClickCast = true,
+        bobberAlert = true,
+        playSound = true,
+        doubleClickWindow = 0.35,
+        minBiteDelay = 1.5,
+        hoverPredictiveDelay = 8.0,
+        adaptiveEnabled = true,
+        adaptiveBootstrapDelay = 8.0,
+        adaptiveMinSeconds = 4.0,
+        adaptiveMaxSeconds = 18.0,
+        adaptiveLeadSeconds = 0.35,
+        adaptiveSamples = {},
+        alertTimeout = 8.0,
+        pulseSpeed = 2.2,
+        pulseAmount = 0.16,
+        glowScale = 1.0,
+      }
+    end
+    catfishEnabled:SetChecked(HitTools.DB.catfish.enabled ~= false)
     baggyEnabled:SetChecked(HitTools.DB.baggy and HitTools.DB.baggy.enabled and true or false)
+
+    local scrapyaDB = HitTools.DB.scrapya
+    if type(scrapyaDB) ~= "table" then
+      HitTools.DB.scrapya = {
+        enabled = true,
+        showSummary = true,
+        shiftBypass = true,
+        sellInterval = 0.2,
+        maxPasses = 40,
+        sellNonPrimarySoulbound = false,
+      }
+      scrapyaDB = HitTools.DB.scrapya
+    end
+    if scrapyaDB.enabled == nil then
+      scrapyaDB.enabled = true
+    end
+    if scrapyaDB.sellNonPrimarySoulbound == nil then
+      scrapyaDB.sellNonPrimarySoulbound = false
+    end
+    scrapyaEnabled:SetChecked(scrapyaDB.enabled and true or false)
+    scrapyaSoulboundMode:SetChecked(scrapyaDB.sellNonPrimarySoulbound and true or false)
+    if refreshScrapyaControls then
+      refreshScrapyaControls()
+    end
 
     setTab("xprate")
   end)

@@ -62,6 +62,25 @@ local DEFAULTS = {
     easterEggs = true,  -- Enable fun particle effects (1.2% chance)
     debugMode = false,
   },
+  catfish = {
+    enabled = true,
+    doubleClickCast = true,
+    bobberAlert = true,
+    playSound = true,
+    doubleClickWindow = 0.35,
+    minBiteDelay = 1.5,
+    hoverPredictiveDelay = 8.0,
+    adaptiveEnabled = true,
+    adaptiveBootstrapDelay = 8.0,
+    adaptiveMinSeconds = 4.0,
+    adaptiveMaxSeconds = 18.0,
+    adaptiveLeadSeconds = 0.35,
+    adaptiveSamples = {},
+    alertTimeout = 8.0,
+    pulseSpeed = 2.2,
+    pulseAmount = 0.16,
+    glowScale = 1.0,
+  },
   baggy = {
     enabled = true,
     showBank = true,
@@ -79,6 +98,14 @@ local DEFAULTS = {
       width = 600,
       height = 500,
     },
+  },
+  scrapya = {
+    enabled = true,
+    showSummary = true,
+    shiftBypass = true,      -- Hold Shift while opening vendor to skip autosell
+    sellInterval = 0.2,      -- Seconds between sell passes
+    maxPasses = 40,          -- Safety cap for repeated sell passes
+    sellNonPrimarySoulbound = false, -- Caution mode (disabled by default)
   },
   xpRate = {
     -- ISSUE B & D FIX: Smart finalize and party output
@@ -295,6 +322,7 @@ HitTools.alertState = {
 
 local ALERT_SOUND_PATHS = {
   healerOOM = "Interface\\AddOns\\Hit_Tools\\assets\\meow.ogg",
+  catfishBobber = "Interface\\AddOns\\Hit_Tools\\assets\\meow.ogg",
 }
 
 HitTools.dungeon = {
@@ -1236,6 +1264,17 @@ function HitTools:HandleSlash(msg)
     return
   end
 
+  -- Catfish commands: /hit catfish <args>
+  if msg:match("^catfish") then
+    local args = msg:match("^catfish%s*(.*)") or ""
+    if self.Catfish and self.Catfish.HandleCommand then
+      self.Catfish:HandleCommand(args)
+    else
+      self:Print("Catfish module not loaded")
+    end
+    return
+  end
+
   -- Baggy commands
   if msg:match("^baggy") then
     local args = msg:match("^baggy%s*(.*)") or ""
@@ -1278,6 +1317,17 @@ function HitTools:HandleSlash(msg)
     return
   end
 
+  -- Scrapya commands
+  if msg:match("^scrapya") then
+    local args = msg:match("^scrapya%s*(.*)") or ""
+    if self.Scrapya and self.Scrapya.HandleCommand then
+      self.Scrapya:HandleCommand(args)
+    else
+      self:Print("Scrapya module not loaded")
+    end
+    return
+  end
+
   -- Verbose loading toggle: /hit verbose
   if msg == "verbose" then
     self.DB.verboseLoading = not self.DB.verboseLoading
@@ -1302,7 +1352,7 @@ function HitTools:HandleSlash(msg)
   local r1 = sessionRate and string.format("%.0f", sessionRate) or "n/a"
   local r2 = rollingRate and string.format("%.0f", rollingRate) or "n/a"
   self:Print(string.format("XP/hr session=%s, rolling=%s. TTL=%s.", r1, r2, ttlStr))
-  self:Print("Commands: /hittools config | stats | ui | lock | reset | cursor grow | social (alias: /xprate)")
+  self:Print("Commands: /hittools config | stats | ui | lock | reset | cursor grow | catfish | baggy | scrapya | social (alias: /xprate)")
 end
 
 function HitTools:ApplyUIEnabled()
@@ -1388,6 +1438,11 @@ local function onEvent(_, event, arg1)
       HitTools.CursorGrow:OnDBReady()
     end
 
+    if HitTools.Catfish and HitTools.Catfish.OnDBReady then
+      HitTools:VerbosePrint("Calling Catfish:OnDBReady()")
+      HitTools.Catfish:OnDBReady()
+    end
+
     HitTools:VerbosePrint("After CursorGrow, checking SocialHeatmap...")
 
     if HitTools.SocialHeatmap and HitTools.SocialHeatmap.OnDBReady then
@@ -1414,6 +1469,16 @@ local function onEvent(_, event, arg1)
       end
     else
       HitTools:VerbosePrint("Baggy.OnDBReady check failed: Baggy=" .. tostring(HitTools.Baggy ~= nil) .. ", OnDBReady=" .. tostring(HitTools.Baggy and HitTools.Baggy.OnDBReady ~= nil))
+    end
+
+    if HitTools.Scrapya and HitTools.Scrapya.OnDBReady then
+      HitTools:VerbosePrint("Calling Scrapya:OnDBReady()")
+      local success, err = pcall(HitTools.Scrapya.OnDBReady, HitTools.Scrapya)
+      if not success then
+        print("[HitTools] ERROR in Scrapya:OnDBReady(): " .. tostring(err))
+      end
+    else
+      HitTools:VerbosePrint("Scrapya.OnDBReady check failed: Scrapya=" .. tostring(HitTools.Scrapya ~= nil) .. ", OnDBReady=" .. tostring(HitTools.Scrapya and HitTools.Scrapya.OnDBReady ~= nil))
     end
 
     -- Mark addon as loaded, message will be printed on PLAYER_ENTERING_WORLD

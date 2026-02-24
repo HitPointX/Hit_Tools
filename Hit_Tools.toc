@@ -11,7 +11,9 @@ Options.lua
 AMark.lua
 MountTracker.lua
 CursorGrow.lua
+Catfish.lua
 SocialHeatmap.lua
 SocialUI.lua
 Baggy.lua
 BaggyUI.lua
+Scrapya.lua

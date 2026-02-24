@@ -215,7 +215,9 @@ end
 function BaggyUI:IsUnsafeLayoutContext(reason)
   local context = self:GetContextState()
 
-  if context.merchant or context.auctionHouse or context.mail or context.trade then
+  -- Merchant/AH should keep updating live so sold/posted items disappear immediately.
+  -- Keep mail/trade deferred because these contexts are more sensitive to layout churn.
+  if context.mail or context.trade then
     return true
   end
 
@@ -441,8 +443,15 @@ function BaggyUI:RegisterEvents()
         self:RequestLayout("bag_update")
       end
     elseif event == "MERCHANT_SHOW"
-      or event == "AUCTION_HOUSE_SHOW"
-      or event == "MAIL_SHOW"
+      or event == "AUCTION_HOUSE_SHOW" then
+      if self.frame and self.frame:IsShown() then
+        -- Ensure we are not stuck in deferred mode from a prior unsafe context.
+        self._unsafeBootstrapDone = false
+        self._unsafeBootstrapArmed = false
+        self._waitingForSafeContext = false
+        self:RequestLayout(event:lower())
+      end
+    elseif event == "MAIL_SHOW"
       or event == "TRADE_SHOW" then
       if self.frame and self.frame:IsShown() then
         self._waitingForSafeContext = true

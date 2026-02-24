@@ -236,15 +236,17 @@ end
 ═══════════════════════════════════════════════════════════════════════════════]]
 
 function Baggy:OnBagUpdate()
-  -- Throttle bag updates
+  -- Always invalidate cache so no inventory change is ever dropped.
+  self:MarkDirty()
+
+  -- Throttle immediate UI refreshes to avoid excessive churn.
   local now = GetTime()
   if now - itemCache.lastUpdate < BAG_UPDATE_THROTTLE then
-    DebugLog("Throttle", "Skipped update (too soon)")
+    DebugLog("Throttle", "Skipped immediate refresh (too soon)")
     return
   end
 
   itemCache.lastUpdate = now
-  self:MarkDirty()
 
   -- Refresh UI if visible (BaggyUI handles deferred layout safely)
   if HitTools.BaggyUI and HitTools.BaggyUI:IsShown() then
