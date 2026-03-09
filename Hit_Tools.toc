@@ -1,7 +1,7 @@
 ## Interface: 20505
 ## Title: Hit-Tools
 ## Notes: XP tracking + tank tools (AMark, more soon).
-## Author: HitPoint
+## Author: hitdev
 ## Version: 0.1.0
 ## SavedVariablesPerCharacter: HitToolsDB, XPRateDB
 
